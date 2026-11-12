@@ -1,4 +1,4 @@
-# Express KMZ Exporter - FTTH Networks for QGIS
+# KMZ Exporter - FTTH Networks for QGIS
 
 Automation tool for **QGIS** designed to process, validate, transform, and export fiber optic infrastructure (**FTTH**) vector layers to compressed **KMZ** files (compatible with Google Earth, Google Maps, Organic Maps, and mobile GIS viewers).
 
@@ -8,17 +8,20 @@ The script is parameterized using a configurable FTTH network element catalog (`
 
 ## Table of Contents
 
-- [Key Features](#key-features)
-- [Prerequisites](#prerequisites)
-- [How to Run the Script in QGIS](#how-to-run-the-script-in-qgis)
-- [GUI User Guide](#gui-user-guide)
-  - [1. Node Grouping Strategy](#1-node-grouping-strategy)
-  - [2. Layer Configuration & Mapping](#2-layer-configuration--mapping)
-  - [3. Output Directory & Export](#3-output-directory--export)
-- [Technical Element Catalog](#technical-element-catalog)
-- [Internal Processing Workflow](#internal-processing-workflow)
-- [Validations and Error Handling](#validations-and-error-handling)
-- [Resulting KMZ Structure](#resulting-kmz-structure)
+- [KMZ Exporter - FTTH Networks for QGIS](#kmz-exporter---ftth-networks-for-qgis)
+  - [Table of Contents](#table-of-contents)
+  - [Key Features](#key-features)
+  - [Prerequisites](#prerequisites)
+  - [How to Run the Script in QGIS](#how-to-run-the-script-in-qgis)
+    - [Step by Step:](#step-by-step)
+  - [GUI User Guide](#gui-user-guide)
+    - [1. Node Grouping Strategy](#1-node-grouping-strategy)
+    - [2. Layer Configuration Table](#2-layer-configuration-table)
+    - [3. Output Folder \& Export](#3-output-folder--export)
+  - [Technical Element Catalog](#technical-element-catalog)
+  - [Internal Processing Workflow](#internal-processing-workflow)
+  - [Validations and Error Handling](#validations-and-error-handling)
+  - [Resulting KMZ Structure](#resulting-kmz-structure)
 
 ---
 
