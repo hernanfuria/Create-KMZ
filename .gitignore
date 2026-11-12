@@ -1,0 +1,7 @@
+# Ignore everything by default
+*
+
+# Allow specific files
+!README.md
+!create_kmz_template.py
+!.gitignore
