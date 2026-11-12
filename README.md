@@ -1,73 +1,73 @@
-# Exportador KMZ Express - Redes FTTH para QGIS
+# Express KMZ Exporter - FTTH Networks for QGIS
 
-Herramienta de automatización para **QGIS** diseñada para procesar, validar, transformar y exportar capas vectoriales de infraestructura de fibra óptica (**FTTH**) a archivos comprimidos **KMZ** (compatibles con Google Earth, Google Maps, Organic Maps y visualizadores GIS móviles).
+Automation tool for **QGIS** designed to process, validate, transform, and export fiber optic infrastructure (**FTTH**) vector layers to compressed **KMZ** files (compatible with Google Earth, Google Maps, Organic Maps, and mobile GIS viewers).
 
-El script está parametrizado mediante un catálogo configurable de elementos de red FTTH (`LAYER_CATALOG`).
-
----
-
-## Índice
-
-- [Características Principales](#características-principales)
-- [Requisitos Previos](#requisitos-previos)
-- [Cómo Ejecutar el Script en QGIS](#cómo-ejecutar-el-script-en-qgis)
-- [Guía de Uso de la Interfaz Gráfica](#guía-de-uso-de-la-interfaz-gráfica)
-  - [1. Estrategia de Agrupación por Nodo](#1-estrategia-de-agrupación-por-nodo)
-  - [2. Configuración y Mapeo de Capas](#2-configuración-y-mapeo-de-capas)
-  - [3. Carpeta de Salida y Exportación](#3-carpeta-de-salida-y-exportación)
-- [Catálogo Técnico de Elementos](#catálogo-técnico-de-elementos)
-- [Flujo de Procesamiento Interno](#flujo-de-procesamiento-interno)
-- [Validaciones y Manejo de Errores](#validaciones-y-manejo-de-errores)
-- [Estructura del KMZ Resultante](#estructura-del-kmz-resultante)
+The script is parameterized using a configurable FTTH network element catalog (`LAYER_CATALOG`).
 
 ---
 
-## Características Principales
+## Table of Contents
 
-- **Interfaz Gráfica Integrada (PyQt5):** Diálogo interactivo para mapear capas, seleccionar campos de atributos y configurar nodos.
-- **Detección Inteligente por Coincidencia Difusa (*Fuzzy Matching*):** Asocia automáticamente los nombres de las capas cargadas con los tipos de elementos del catálogo, sin importar el orden de las palabras (ej. `200m_PRECONECTORIZADO` con `200m_PRECONECTORIZADO`).
-- **Modos de Exportación:**
-  - **Nodo Único (*Single Node*):** Exporta todas las capas seleccionadas a un solo archivo `.kmz`.
-  - **Múltiples Nodos (*Multiple Nodes*):** Separa y genera archivos `.kmz` independientes automáticamente según un atributo de nodo (ej. campo `NODO`).
-- **Reproyección Automática a WGS84 (`EPSG:4326`):** Transforma cualquier sistema de coordenadas de origen (ej. POSGAR, Gauss-Krüger, UTM) al estándar geográfico requerido por KML/KMZ.
-- **Simbología y Estilos Preconfigurados:** Aplica colores (formato KML `aabbggrr`), grosores de línea e íconos oficiales de Google Earth para cada elemento de la red.
-- **Auditoría y Validación Exhaustiva de Datos:** Inspecciona geometrías nulas/vacías y atributos faltantes antes de generar archivos, presentando un reporte unificado de inconsistencias.
-
----
-
-## Requisitos Previos
-
-1. **QGIS 3.x** instalado (versión 3.16 LTR o superior recomendada).
-2. Proyecto de QGIS abierto con las capas vectoriales cargadas (Shapefiles, GeoPackage, etc.).
-3. Acceso a la consola de Python integrada de QGIS. No se requieren librerías externas adicionales; el script utiliza módulos nativos de Python (`os`, `zipfile`, `xml.etree.ElementTree`, `difflib`, `re`) y las APIs de QGIS (`qgis.core`, `qgis.gui`, `qgis.PyQt`).
+- [Key Features](#key-features)
+- [Prerequisites](#prerequisites)
+- [How to Run the Script in QGIS](#how-to-run-the-script-in-qgis)
+- [GUI User Guide](#gui-user-guide)
+  - [1. Node Grouping Strategy](#1-node-grouping-strategy)
+  - [2. Layer Configuration & Mapping](#2-layer-configuration--mapping)
+  - [3. Output Directory & Export](#3-output-directory--export)
+- [Technical Element Catalog](#technical-element-catalog)
+- [Internal Processing Workflow](#internal-processing-workflow)
+- [Validations and Error Handling](#validations-and-error-handling)
+- [Resulting KMZ Structure](#resulting-kmz-structure)
 
 ---
 
-## Cómo Ejecutar el Script en QGIS
+## Key Features
 
-El script utiliza el objeto global `iface` provisto por el entorno interactivo de QGIS, por lo que **debe ejecutarse exclusivamente desde la Consola de Python de QGIS**.
-
-### Paso a Paso:
-
-1. **Abrir QGIS** y cargar el proyecto o las capas vectoriales que se desean exportar.
-2. **Seleccionar las capas a exportar:**
-   - En el panel **Capas** (*Layers Panel*) de QGIS, mantén presionada la tecla `Ctrl` o `Shift` y **selecciona todas las capas vectoriales** que formarán parte del KMZ (cajas, NAPs, preconectorizados, troncales, etc.).
-   > ⚠️ **Importante:** Si no seleccionas ninguna capa vectorial antes de ejecutar el script, se mostrará un mensaje de advertencia y el proceso se cancelará.
-3. **Abrir la Consola de Python:**
-   - Ve al menú superior: **Complementos** (*Plugins*) -> **Consola de Python** (*Python Console*), o presiona el atajo de teclado `Ctrl + Alt + P`.
-4. **Abrir el Editor de Código:**
-   - En la barra de herramientas de la consola de Python, haz clic en el ícono del bloc de notas/lápiz (**Mostrar editor** / *Show Editor*).
-5. **Cargar el script:**
-   - En el editor, haz clic en el botón **Abrir script...** (*Open script*) y navega hasta el archivo `create_kmz_express_rosario.py`.
-6. **Ejecutar el script:**
-   - Haz clic en el botón verde **Ejecutar script** (*Run script*) o presiona `F5` con el editor activo.
-7. Se abrirá la ventana emergente **FTTH KMZ Exporter Setup**.
+- **Integrated Graphical Interface (PyQt5):** Interactive dialog to map layers, select attribute fields, and configure nodes.
+- **Smart Fuzzy Matching Detection:** Automatically associates loaded layer names with catalog element types, regardless of word order (e.g., `backbone_144` with `BACKBONE 144`).
+- **Export Modes:**
+  - **Single Node:** Exports all selected layers into a single `.kmz` file.
+  - **Multiple Nodes:** Automatically splits and generates independent `.kmz` files based on a node attribute field (e.g., `NODE` field).
+- **Automatic Reprojection to WGS84 (`EPSG:4326`):** Transforms any source coordinate system (e.g., POSGAR, Gauss-Krüger, UTM) to the geographic standard required by KML/KMZ.
+- **Preconfigured Symbology and Styles:** Applies colors (KML format `aabbggrr`), line widths, and official Google Earth icons for each network element.
+- **Exhaustive Data Audit and Validation:** Inspects null/empty geometries and missing attributes before generating files, presenting a unified inconsistency report.
 
 ---
 
-## Guía de Uso de la Interfaz Gráfica
+## Prerequisites
 
-Al ejecutarse el script, se presenta el diálogo de configuración dividido en tres secciones principales:
+1. **QGIS 3.x** installed (version 3.16 LTR or higher recommended).
+2. QGIS project open with vector layers loaded (Shapefiles, GeoPackage, etc.).
+3. Access to the QGIS integrated Python console. No additional external libraries required; the script uses native Python modules (`os`, `zipfile`, `xml.etree.ElementTree`, `difflib`, `re`) and QGIS APIs (`qgis.core`, `qgis.gui`, `qgis.PyQt`).
+
+---
+
+## How to Run the Script in QGIS
+
+The script uses the global `iface` object provided by the QGIS interactive environment, so it **must be executed exclusively from the QGIS Python Console**.
+
+### Step by Step:
+
+1. **Open QGIS** and load the project or vector layers you want to export.
+2. **Select layers to export:**
+   - In the QGIS **Layers Panel**, hold down `Ctrl` or `Shift` and **select all vector layers** that will be part of the KMZ (closures, LCPs, FATs, backbones, etc.).
+   > ⚠️ **Important:** If no vector layer is selected before running the script, a warning message will appear and the process will be canceled.
+3. **Open the Python Console:**
+   - Go to the top menu: **Plugins** -> **Python Console**, or press the keyboard shortcut `Ctrl + Alt + P`.
+4. **Open the Code Editor:**
+   - In the Python console toolbar, click the notepad/pencil icon (**Show Editor**).
+5. **Load the script:**
+   - In the editor, click **Open script...** and navigate to `create_kmz_template.py`.
+6. **Run the script:**
+   - Click the green **Run script** button or press `F5` with the editor active.
+7. The **FTTH KMZ Exporter Setup** popup window will appear.
+
+---
+
+## GUI User Guide
+
+When the script runs, the configuration dialog is presented, divided into three main sections:
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
@@ -75,133 +75,133 @@ Al ejecutarse el script, se presenta el diálogo de configuración dividido en t
 ├────────────────────────────────────────────────────────────────────────┤
 │ [1] Node Grouping Strategy                                            │
 │   (o) Single Node (One global KMZ file)                                │
-│       [ Ingrese nombre de nodo (ej: NODO_CENTRO) ]                     │
+│       [ Enter node/folder name (e.g. NODO_CENTRO) ]                    │
 │   ( ) Multiple Nodes (Split into multiple KMZ files by field attribute)│
-│       [ Desplegable con campos de atributo para nodo ]                 │
+│       [ ComboBox with node attribute fields ]                          │
 ├────────────────────────────────────────────────────────────────────────┤
 │ [2] Layer Configuration Table                                          │
 │   Layer Name        | Entity Type Target     | Content Field (Name)    │
 │   ------------------+------------------------+---------------------    │
-│   CENTROS DE NODO   | CAJA EMPALME           | ID_EMPALME              │
-│   NAP 80-20 x 8 b.  | NAP 80-20 x 8 bocas    | COD_NAP                 │
-│   TRONCAL 144       | TRONCAL 144            | fid                     │
+│   CENTROS DE NODO   | CO                     | ID_CO                   │
+│   FAT_LAYER         | FAT                    | CODE_FAT                │
+│   BACKBONE_144      | BACKBONE 144           | fid                     │
 ├────────────────────────────────────────────────────────────────────────┤
-│ [3] Carpeta de salida y botones                                        │
-│   [ C:/Ruta/Destino... ]  [ Browse Output Folder... ]                  │
+│ [3] Output Folder & Buttons                                            │
+│   [ C:/Output/Path... ]   [ Browse Output Folder... ]                  │
 │                                                                        │
 │                                      [ Export KMZ ]  [ Cancel / Abort ]│
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 1. Estrategia de Agrupación por Nodo
+### 1. Node Grouping Strategy
 - **Single Node (One global KMZ file):**
-  - Activa la exportación unificada en un solo archivo `.kmz`.
-  - Debes ingresar en la caja de texto el nombre del nodo o carpeta principal (por ejemplo, `NODO 07` o `NODO_SUR`).
+  - Enables unified export into a single `.kmz` file.
+  - Enter the name of the node or main folder in the text box (e.g., `NODE 07` or `NODE_SOUTH`).
 - **Multiple Nodes (Split into multiple KMZ files by field attribute):**
-  - Divide la red en múltiples archivos `.kmz` según el valor de un campo existente en las capas (por ejemplo, `NODO`, `SECTOR` o `ZONA`).
-  - Habilita el menú desplegable para elegir cuál es el campo divisor.
+  - Splits the network into multiple `.kmz` files based on the value of an existing field in the layers (e.g., `NODE`, `SECTOR`, or `ZONE`).
+  - Enables the dropdown menu to select the splitting field.
 
-### 2. Configuración y Mapeo de Capas
-La tabla lista automáticamente todas las capas vectoriales seleccionadas en QGIS:
-- **Layer Name:** Nombre de la capa en el árbol de capas (no editable).
-- **Entity Type Target:** Menú desplegable con los tipos del catálogo FTTH. El script asigna una coincidencia preliminar automáticamente evaluando el nombre de la capa. Puedes cambiarla manualmente si deseas reasignar una categoría.
-- **Content Field (Name Attribute):** Atributo de la capa que se utilizará como nombre visible de cada elemento en Google Earth. El script omite automáticamente atributos irrelevantes como `type` y `block_name` y selecciona el primer campo útil.
+### 2. Layer Configuration Table
+The table automatically lists all vector layers selected in QGIS:
+- **Layer Name:** Layer name in the layer tree (read-only).
+- **Entity Type Target:** Dropdown menu with FTTH catalog types. The script automatically assigns a preliminary match by evaluating the layer name. You can change it manually if you want to reassign a category.
+- **Content Field (Name Attribute):** Layer attribute used as the visible name of each element in Google Earth. The script automatically omits irrelevant attributes like `type` and `block_name` and selects the first useful field.
 
-### 3. Carpeta de Salida y Exportación
-- Haz clic en **Browse Output Folder...** para seleccionar la carpeta donde se guardarán los archivos `.kmz`.
-- Presiona **Export KMZ** para iniciar la validación y generación.
-- Presiona **Cancel / Abort** para cerrar sin realizar cambios.
+### 3. Output Folder & Export
+- Click **Browse Output Folder...** to select the directory where `.kmz` files will be saved.
+- Click **Export KMZ** to start validation and generation.
+- Click **Cancel / Abort** to close without making changes.
 
 ---
 
-## Catálogo Técnico de Elementos
+## Technical Element Catalog
 
-El diccionario `LAYER_CATALOG` define la jerarquía, geometría, simbología y reglas de nombrado de cada elemento de red:
+The `LAYER_CATALOG` dictionary defines the hierarchy, geometry, symbology, and naming rules for each network element:
 
-| Elemento | Geometría | Orden KML | Color (KML Hex) | Tamaño / Ancho | Estilo / Ícono |
+| Element | Geometry | KML Order | Color (KML Hex) | Size / Width | Style / Icon |
 | :--- | :---: | :---: | :---: | :---: | :--- |
-| **CO** | Punto | 1 | `ff000000` (Negro) | 2.4 | Cuadrado |
-| **Splice Closure** | Punto | 2 | `ff631ee9` | 1.2 | Triángulo |
-| **LCP** | Punto | 3 | `ffd4bc00` | 1.2 | Triángulo |
-| **FAT** | Punto | 4 | `ff30b1f3` | 1.2 | Punto sombreado |
-| **BACKBONE 144** | Línea | 5 | `ff0000ff` (Rojo) | Ancho: 3.0 | Línea troncal |
-| **BACKBONE 24** | Línea | 9 | `ff00ff00` (Verde) | Ancho: 3.0 | Línea troncal |
-| **BACKBONE 12** | Línea | 10 | `ffff00ff` (Magenta) | Ancho: 3.0 | Línea troncal |
-| **LATERAL 12** | Línea | 11 | `ffff00ff` (Magenta) | Ancho: 1.2 | Línea lateral |
+| **CO** | Point | 1 | `ff000000` (Black) | 2.4 | Square |
+| **Splice Closure** | Point | 2 | `ff631ee9` | 1.2 | Triangle |
+| **LCP** | Point | 3 | `ffd4bc00` | 1.2 | Triangle |
+| **FAT** | Point | 4 | `ff30b1f3` | 1.2 | Shaded dot |
+| **BACKBONE 144** | Line | 5 | `ff0000ff` (Red) | Width: 3.0 | Backbone line |
+| **BACKBONE 24** | Line | 9 | `ff00ff00` (Green) | Width: 3.0 | Backbone line |
+| **BACKBONE 12** | Line | 10 | `ffff00ff` (Magenta) | Width: 3.0 | Backbone line |
+| **LATERAL 12** | Line | 11 | `ffff00ff` (Magenta) | Width: 1.2 | Lateral line |
 
-> **Nota sobre colores KML:** Los códigos de color KML se expresan en hexadecimal con formato `aabbggrr` (Alfa, Azul, Verde, Rojo), en lugar del orden estándar web `rrggbbaa`.
+> **Note on KML Colors:** KML color codes are expressed in hexadecimal in `aabbggrr` format (Alpha, Blue, Green, Red), rather than the standard web `rrggbbaa` order.
 
 ---
 
-## Flujo de Procesamiento Interno
+## Internal Processing Workflow
 
-El método principal `run()` orquesta 4 fases secuenciales:
+The main `run()` method orchestrates 4 sequential phases:
 
 ```
-[Selección de Capas en QGIS]
+[Selected Layers in QGIS]
              │
              ▼
  1. _display_configuration_dialog()
-    - Interfaz gráfica PyQt
-    - Coincidencia difusa de tipos
-    - Captura de parámetros del usuario
+    - PyQt GUI
+    - Fuzzy type matching
+    - User parameters capture
              │
              ▼
  2. _input_check_inputs_validity()
-    - Validación de directorio destino
-    - Auditoría de geometrías nulas o vacías
-    - Verificación de atributos requeridos
+    - Output directory validation
+    - Null or empty geometry audit
+    - Required attributes verification
              │
              ▼
  3. _process_and_group_features()
-    - Reproyección al CRS EPSG:4326 (WGS84)
-    - Formateo de coordenadas para Point / LineString / MultiPolyline
-    - Extracción de nombres y agrupación por Nodo y Tipo
+    - Reprojection to CRS EPSG:4326 (WGS84)
+    - Coordinate formatting for Point / LineString / MultiPolyline
+    - Name extraction and grouping by Node and Type
              │
              ▼
  4. _create_and_save_kmz()
-    - Construcción del árbol XML KML 2.2
-    - Generación de estilos e inserción de Placemarks
-    - Creación de doc.kml temporal y compresión ZIP a {nodo}.kmz
-    - Limpieza de temporales y notificación de éxito
+    - KML 2.2 XML tree construction
+    - Style generation and Placemark insertion
+    - Temporary doc.kml creation and ZIP compression to {node}.kmz
+    - Cleanup of temporals and success notification
 ```
 
 ---
 
-## Validaciones y Manejo de Errores
+## Validations and Error Handling
 
-El script no exporta datos corruptos o incompletos. Durante la fase `_input_check_inputs_validity()`, realiza las siguientes comprobaciones:
+The script does not export corrupted or incomplete data. During the `_input_check_inputs_validity()` phase, it performs the following checks:
 
-1. **Directorio de salida:** Verifica que la ruta exista en el sistema de archivos.
-2. **Nombre en Modo Nodo Único:** Confirma que el campo no esté vacío.
-3. **Existencia del Campo de Nodo:** En modo multi-nodo, valida que el atributo seleccionado exista en todas las capas analizadas.
-4. **Geometría Válida:** Verifica objeto por objeto (`feature.geometry()`) que no existan registros con geometrías nulas (`isNull()`) o vacías (`isEmpty()`).
-5. **Atributos de Contenido Obligatorios:** Para elementos con `has_content: True` (como cajas, NAPs y límites), verifica que ningún registro tenga valores `NULL` o vacíos.
+1. **Output Directory:** Verifies that the path exists in the file system.
+2. **Single Node Name:** Confirms the name field is not empty.
+3. **Node Field Existence:** In multi-node mode, validates that the selected attribute exists across all analyzed layers.
+4. **Valid Geometry:** Inspects feature by feature (`feature.geometry()`) to ensure no records have null (`isNull()`) or empty (`isEmpty()`) geometries.
+5. **Mandatory Content Attributes:** For elements requiring content (`has_content: True`), verifies that no record has `NULL` or empty values.
 
-Si se detectan inconsistencias:
-- El proceso se interrumpe antes de escribir ningún archivo.
-- Los errores se imprimen en detalle en la consola de Python de QGIS.
-- Se muestra un cuadro de diálogo de error (`QMessageBox.critical`) con una lista de las primeras inconsistencias encontradas y su identificador (`FID`), permitiendo localizarlas y corregirlas en QGIS rápidamente.
+If inconsistencies are detected:
+- The process stops before writing any files.
+- Errors are printed in detail in the QGIS Python console.
+- An error dialog (`QMessageBox.critical`) displays a list of the first inconsistencies found and their identifier (`FID`), allowing quick location and correction in QGIS.
 
 ---
 
-## Estructura del KMZ Resultante
+## Resulting KMZ Structure
 
-Cada archivo `.kmz` generado sigue una estructura jerárquica estandarizada y limpia al abrirse en Google Earth:
+Each generated `.kmz` file follows a clean, standardized hierarchical structure when opened in Google Earth:
 
 ```text
-Nodo_Seleccionado.kmz
+Selected_Node.kmz
 └── doc.kml
-    └── Document [Nombre del Nodo]
-        └── Carpeta Raíz [Nombre del Nodo]
-            ├── CO/                    (Íconos cuadrados negros con IDs)
-            ├── Splice Closure/        (Íconos triangulares morados con IDs)
-            ├── LCP/                   (Íconos triangulares amarillos con IDs)
-            ├── FAT/                   (Puntos celestes sombreados con IDs)
-            ├── BACKBONE 144/          (Líneas rojas de 3.0 px)
-            ├── BACKBONE 24/           (Líneas verdes de 3.0 px)
-            ├── BACKBONE 12/           (Líneas magenta de 3.0 px)
-            └── LATERAL 12/            (Líneas magenta de 1.2 px)
+    └── Document [Node Name]
+        └── Root Folder [Node Name]
+            ├── CO/                    (Black square icons with IDs)
+            ├── Splice Closure/        (Purple triangle icons with IDs)
+            ├── LCP/                   (Yellow triangle icons with IDs)
+            ├── FAT/                   (Light blue shaded dots with IDs)
+            ├── BACKBONE 144/          (Red lines, 3.0 px)
+            ├── BACKBONE 24/           (Green lines, 3.0 px)
+            ├── BACKBONE 12/           (Magenta lines, 3.0 px)
+            └── LATERAL 12/            (Magenta lines, 1.2 px)
 ```
 
-Al estar comprimido en formato KMZ, el archivo es ligero, autocontenido y listo para ser distribuido a técnicos de campo o clientes.
+Compressed in KMZ format, the file is lightweight, self-contained, and ready to be distributed to field technicians or clients.
